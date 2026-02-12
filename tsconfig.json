@@ -2,7 +2,7 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./src",
+    // "rootDir": "./src",
     "outDir": "./dist",
 
     // Environment Settings
@@ -35,14 +35,20 @@
 
     // Recommended Options
     "strict": true,
-    "esModuleInterop": true,
-    "ignoreDeprecations": "6.0",
-    "jsx": "react-jsx",
+  // "jsx": "react-jsx",
     // "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+      "esModuleInterop": true,
   },
-  "include": ["src/**/*"]
+
+  "include": ["src/**/*"],
+  
+   "exclude": [
+    "node_modules",
+    "dist",
+    "generated/prisma"
+  ]
 }
