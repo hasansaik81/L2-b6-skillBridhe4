@@ -82,10 +82,22 @@ const updateUserData=async (data:Partial<User>,user:User)=>{
     });
 }
 
+const updateUserStatus= async(status:string,userId:string)=>{
+return await prisma.user.update({
+    where:{
+        id:userId
+    },
+    data:{
+        status
+    }
+})
+}
+
 
 
 export const userService={
     listUsers,
     getUser,
-      updateUserData
+      updateUserData,
+      updateUserStatus
 }

@@ -2,12 +2,7 @@ import cors from "cors";
 import express, { Application } from "express";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
-
-// import { postRouter } from "./modules/post/post.router";
-// import { auth } from "./lib/auth";
-// import { commentRouter } from "./modules/comment/comment.router";
-// import { notFond } from "./middlewares/notFound";
-// import errorHandler from "./middlewares/globalErrorHandler";
+import { userRouter } from "./modules/user/user.router";
 
 const app: Application = express();
 
@@ -32,9 +27,8 @@ app.use(express.json());
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 
+app.use("/api/auth",userRouter);
 
-// app.use("/posts",postRouter);
-// app.use("/comments",commentRouter);
 
 app.get("/",(req,res)=>{
     res.send("Hello World :prisma is working");

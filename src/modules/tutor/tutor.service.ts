@@ -1,0 +1,325 @@
+
+import { TutorProfiles, User } from "../../../generated/prisma/client";
+import { UserRoles, UserStatus } from "../../../generated/prisma/enums";
+import { prisma } from "../../lib/prisma";
+
+type FilterItems={
+    search :string|null;
+    hourlyRate:number|null;
+    categoryId:string|null;
+    IsFeatured:boolean|null;
+    avgRating:number|null;
+    totalExperience:number|null;
+    subjectId:string|null;
+
+    page:number;
+    limit:number;
+    skip:number;
+    sortBy:string;
+    sortOrder:string;
+}
+
+
+
+const getAllTutors=async({search, hourlyRate, categoryId,IsFeatured,avgRating,totalReview,subjectId,page,limit,sortBy,sortOrder}:FilterItems)=>{
+ const andConditions:any[]=[];
+ if(search){
+    andConditions.push({
+        OR:[{
+            user:{
+                name:{
+                    contains:search,
+                    mode:"insensitive"
+                }
+            }
+        },
+    {
+        bio:{
+            contains:search,
+            mode:"insensitive"
+        }
+    }
+    ],
+    })
+ }
+   if(subjectId){
+    andConditions.push({
+        subjucts:{
+            some:{
+                subjectId
+            }
+        }
+    })
+   }
+   if(categoryId){
+    andConditions.push({
+        hourlyRate:{
+            lte:hourlyRate
+        }
+    })
+   }
+   if(categoryId){
+    andConditions.push({
+        categoryId
+    })
+   }
+
+   if(IsFeatured !==null){
+    andConditions.push({
+        IsFeatured:IsFeatured
+    })
+   }
+   if(avgRating){
+    andConditions.push({
+        avgRating:{
+            gte:avgRating
+        }
+    })
+   }
+   if(totalReview){
+    andConditions.push({
+        totalReview:{
+            gte:totalReview
+        }
+    })
+   }
+
+   andConditions.push({
+    user :{
+        status:UserStatus.ACTIVE
+    }
+   });
+   const result= await prisma.tutorProfiles.findMany({
+    take:limit,
+    skip,
+    where:{
+        AND:andConditions
+    },
+    orderBy:{
+        [sortBy]:sortOrder,
+    },
+    include:{
+        user:true,
+        availability:true,
+        category:true,
+        _count:{
+            select:{
+                reviews:true
+            }
+        }
+    }
+
+   })
+
+   const total = await prisma.tutorProfiles.count({
+    where:{
+        AND:andConditions,
+    },
+   });
+   return {
+    data:result,
+    pagination :{
+        total,
+        page,
+        limit,
+        totalPages:Math.ceil(total/limit),
+    }
+   }
+
+}
+
+const getTutorById=async (totorId:string)=>{
+    return await prisma.tutorProfiles.findUnique({
+        where:{
+            id:totorId
+        },
+        include:{
+            user:true,
+            category:true,
+            availability:true,
+            reviews:{
+                include:{
+                    student:true
+                }
+            },
+            subjects:{
+                include:{
+                    subject:true
+                }
+            }
+        }
+    })
+}
+
+const updateTutor=async(data:Partial<TutorProfiles>,user:User)=>{
+    if(user.role !==UserRoles.ADMIN){
+        delete data.isFeatured;
+        delete data.avgRating;
+        delete data.totalReviews;
+    }
+
+    return await prisma.tutorProfiles.update({
+        where:{
+            userId:user.id
+        },
+        data
+    })
+}
+
+const updateTutorSubjects = async (subjectIds : string[], user : User) => {
+    const tutorProfile = await prisma.tutorProfiles.findUnique({
+        where : {
+            userId : user.id
+        }
+    })
+
+    if (!tutorProfile) {
+        throw new Error("Tutor profile not found");
+    }
+
+    if (!tutorProfile.categoryId) {
+        throw new Error("Tutor profile category not found");
+    }
+
+    const subjects = await prisma.subject.findMany({
+        where : {
+            id : {in : subjectIds}
+        }, 
+        select : {
+            id : true,
+            categoryId : true
+        }
+    })
+
+    if (subjects.length !== subjectIds.length) {
+        throw new Error("One or more subjects are invalid");
+    }
+
+    const invalidSubject = subjects.find(
+        (s) => s.categoryId !== tutorProfile.categoryId
+    )
+
+    if (invalidSubject) {
+       throw new Error("You selected a subject outside your category");
+    }
+
+    return await prisma.$transaction(async (tx) => {
+        await tx.tutorSubject.deleteMany({
+            where : {
+                tutorId : tutorProfile.id
+            }
+        })
+
+        const data = subjectIds.map(subjectId => ({tutorId : tutorProfile.id, subjectId}))
+
+        return await tx.tutorSubject.createManyAndReturn({
+            data
+        })
+    })
+}
+
+const deletTutorSubject= async(subjectId:string,user:User)=>{
+    const tutorProfile= await prisma.tutorProfiles.findUnique({
+        where:{userId:user.id},
+    });
+    if(!tutorProfile){
+        throw new Error("Tutor not found");
+    }
+    return await prisma.tutorSubject.delete({
+        where:{
+            tutorId_subjectId:{
+                tutorId:tutorProfile.id,
+                subjectId:subjectId
+            },
+        },
+    });
+}
+
+const featureTutor= async (isFeatured:boolean,tutorId:string)=>{
+    return await prisma.tutorProfiles.update({
+        where:{
+            id:tutorId
+
+        },
+        data:{
+            isFeatured
+        }
+    })
+}
+
+// const getTutorDashboardOverview = async (user:User)=>{
+//     const tutorProfile= await prisma.tutorProfiles.findUnique({
+//         where:{
+//             userId:user.id
+//         },
+//         select:{
+//             id:true,
+//             bio:true,
+//             hourlyRate:true,
+//             avgRating:true,
+//             totalReviews:true,
+//             isFeatured:true,
+//             category:{
+//                 select:{
+//                     id:true,
+//                     name:true
+//                 }
+//             },
+
+//             subjects:{
+//                 select:{
+//                     subject:{
+//                         select:{
+//                             id:true,
+//                             name:true
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     });
+//     if(!tutorProfile){
+//         throw new Error("Tutor profile not found");
+//     }
+//     return await prisma.$transaction(async(tx)=>{
+//         const [
+//             totalBookings,
+//             completedBookings,
+//             cancelledBookings,
+//             upcomingBookings,
+//             totolEarnings,
+//             recentReviews,
+//             availabilities
+//         ]= await Promise.all([
+//             tx.booking.count({
+//                 where:{
+//                     tutorId:tutorProfile.id
+//                 }
+//             }),
+//             tx.booking.count({
+//                 where:{
+//                     tutorId:tutorProfile.id,
+//                     status:"COMPLETED"
+//                 }
+
+//             })
+//         ])
+//     })
+// }
+
+
+
+
+export const tutorService={
+    getAllTutors,
+    getTutorById,
+    updateTutor,
+    updateTutorSubjects,
+    deletTutorSubject,
+    featureTutor
+}
+
+
+
+
+
