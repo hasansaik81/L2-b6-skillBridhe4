@@ -1,6 +1,6 @@
 
 import { TutorProfiles, User } from "../../../generated/prisma/client";
-import { UserRoles, UserStatus } from "../../../generated/prisma/enums";
+import { AvailabilityStatus, UserRoles, UserStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 
 type FilterItems={
@@ -308,7 +308,179 @@ const featureTutor= async (isFeatured:boolean,tutorId:string)=>{
 // }
 
 
+const getTutorDashboardOverview=async(user:User)=>{
+    const tutorProfile= await prisma.tutorProfiles.findUnique({
+        where:{
+            userId:user.id
+        },
+        select:{
+            id:true,
+            bio:true,
+            hourlyRate:true,
+            avgRating:true,
+            totalReviews:true,
+            isFeatured:true,
+            category:{
+                select:{
+                    id:true,
+                    name:true
+                }
+            },
 
+            subjects:{
+                select:{
+                    subject:{
+                        select:{
+                            id:true,
+                            name:true
+                        }
+                    }
+                }
+            }
+        }
+    });
+    if(!tutorProfile){
+        throw new Error("Tutor profile not found");
+    }
+    return await prisma.$transaction(async(tx)=>{
+        const[
+            totalBookings,
+            completedBookings,
+            cancelledBookings,
+            upcomingBookings,
+            totalEarnings,
+            recentReviews,
+            availabilities
+        ]= await Promise.all([
+            tx.booking.count({
+                where:{
+                    tutorId:tutorProfile.id
+                }
+
+            }),
+            tx.booking.count({
+                where:{
+                    tutorId:tutorProfile.id,
+                    status:"COMPLETED"
+                }
+            }),
+            tx.booking.count({
+                where:{
+                    tutorId:tutorProfile.id,
+                    status:"CANCELLED"
+                }
+            }),
+
+            tx.booking.findMany({
+                where:{
+                    tutorId:tutorProfile.id,
+                    status:"CONFIRMED"
+                },
+                orderBy:{
+                    completedAt:"desc"
+                },
+                take:5,
+                select:{
+                    id:true,
+                    price:true,
+                    status:true,
+                    createdAt:true,
+                    completedAt:true,
+                    stdudent:{
+                        select:{
+                            id:true,
+                            name:true,
+                            image:true
+                        }
+                    },
+                    availability:{
+                        select:{
+                            day:true,
+                            startTime:true,
+                            endTime:true
+                        }
+                    }
+                }
+            }),
+            tx.booking.aggregate({
+                where:{
+                    tutorId:tutorProfile.id,
+                    status:"COMPLETED"
+                },
+                _sum:{
+                    price:true
+                }
+            }),
+            tx.review.findMany({
+                where:{
+                    tutorId:tutorProfile.id
+                },
+                orderBy:{
+                    createdAt:"desc"
+                },
+                take:5,
+                select:{
+                    id:true,
+                    rating:true,
+                    review:true,
+                    createdAt:true,
+                    student:{
+                        select:{
+                            id:true,
+                            name:true,
+                            image:true
+                        }
+                    }
+                }
+            }),
+            tx.availability.findMany({
+                where:{
+                    tutorId:tutorProfile.id
+                },
+                orderBy:{
+                    day:"asc"
+                },
+                select:{
+                    id:true,
+                    day:true,
+                    startTime:true,
+                    endTime:true,
+                    status:true
+                }
+            })
+        ]);
+        
+        const activeAvilabilities=availabilities.filter(a=>a.status===AvailabilityStatus.AVAILABLE);
+        return {
+            profile:{
+                bio:tutorProfile.bio,
+                hourlyRate:tutorProfile.hourlyRate,
+                avgRating:tutorProfile.avgRating,
+                totalReview:tutorProfile.totalReviews,
+                isFeatured:tutorProfile.isFeatured,
+                category:tutorProfile.category,
+                subjects:tutorProfile.subjects.map(tutorSubject=>tutorSubject.subject)
+
+
+            },
+            stats:{
+                totalBookings,
+                completedBookings,
+                cancelledBookings,
+                upcomingCount:upcomingBookings.length,
+                totalEarnings:totalEarnings._sum.price??0
+            },
+            upcomingBookings,
+            recentReviews,
+            availability:{
+                total:availabilities.length
+                activeSlots:activeAvilabilities.length,
+                slots:availabilities
+            }
+        }
+
+    })
+}
 
 export const tutorService={
     getAllTutors,

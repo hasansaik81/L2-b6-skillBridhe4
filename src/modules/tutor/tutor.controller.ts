@@ -2,6 +2,8 @@ import { NextFunction, Request, Response,  } from "express";
 
 import { tutorService } from "./tutor.service";
 import { resolve } from "node:url";
+import paginationSortingHelper from "../../utils/paginationHelper";
+import { User } from "../../../generated/prisma/client";
 
 
 
@@ -30,6 +32,7 @@ const getAllTutors=async (req:Request,res:Response,next:NextFunction)=>{
     }
 }
 
+
 const getTutorById=async (req:Request,res:Response,next:NextFunction)=>{
    try{
     const result=await tutorService.getTutorById(req.params.tutouId as string);
@@ -42,7 +45,48 @@ const getTutorById=async (req:Request,res:Response,next:NextFunction)=>{
       next(e)
    }
 }
+const updateTutor=async (req:Request,res:Response,next:NextFunction)=>{
+   try{
+    const result=await tutorService.updateTutor(req.body,req.user as User);
+    
+    return res.status(200).json({success:true,message:"Tutors data update successfully",data:result})
+   } catch(e) {
+      next(e)
+   }
+}
+
+const updateTutorSubjects= async(req:Request,res:Response,next:NextFunction)=>{
+   try{
+    const {subjectIds}=req.body;
+    if(!Array.isArray(subjectIds)||
+   subjectIds.length===0||
+   !subjectIds.every((id:unknown)=>typeof id==="string")){
+      return res.status(400).json({
+         success:false,
+         message:"Invalid format.Expected :subjectIds:['id1','id2'] "
+      });
+   }
+    const result= await tutorService.updateTutorSubjects(subjectIds,req.user as User);
+     return res.status(200).json({success : true, message : "Subjects updated successfully", data : result})
+   }catch{
+
+   }
+}
+
+const getTutorDashboardOverview=async(req:Request,res:Response,next:NextFunction)=>{
+   try{
+      const result =await tutorService.getTutorDashboardOverview(req.user as User);
+      return res.status(200).json({success:true,message:"Retrieved tutors overview successfully",data:result})
+   }catch (e) {
+    next(e)
+   }
+}
 
 
-export const tutorController={getAllTutors,getTutorById}
+export const tutorController={getAllTutors,
+   getTutorById,
+
+   updateTutor,
+
+}
 
