@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response,  } from "express";
 
 import { tutorService } from "./tutor.service";
-import { resolve } from "node:url";
+
 import paginationSortingHelper from "../../utils/paginationHelper";
 import { User } from "../../../generated/prisma/client";
+
 
 
 
@@ -68,10 +69,47 @@ const updateTutorSubjects= async(req:Request,res:Response,next:NextFunction)=>{
    }
     const result= await tutorService.updateTutorSubjects(subjectIds,req.user as User);
      return res.status(200).json({success : true, message : "Subjects updated successfully", data : result})
-   }catch{
-
+   }catch (e) {
+  next(e)
    }
 }
+
+const deleteTutorSubject= async(req:Request,res:Response, next:NextFunction)=>{
+   try{
+      const {subjectId}=req.params;
+      if(!subjectId||typeof subjectId!=="string"){
+          return res.status(400).json({
+            success:false,
+            message:"subjectId is required",
+          })
+      }
+      const result= await tutorService.deletTutorSubject(subjectId,req.user as User)
+      return res.status(200).json({success:true,message:"Subject deleted successful",data:result})
+
+   }catch (e) {
+      next(e)
+   }
+}
+
+
+const featureTutor= async(req:Request,res:Response,next:NextFunction)=>{
+   try{
+      if(Object.keys(req.body).some((key)=>key!=="isFeatured"))
+      
+      
+      return res.status(400).json({
+         success:false,
+         message:"Invalid field input. Only isFeatured is allowed."
+      });
+      const result= await tutorService.featureTutor(req.body.isFeatured,req.params.tutorId as string);
+     return res.status(200).json({success : true, message : "Subjects updated successfully", data : result})
+   }catch (e) {
+    next(e)
+   }
+    
+   
+}
+
 
 const getTutorDashboardOverview=async(req:Request,res:Response,next:NextFunction)=>{
    try{
@@ -85,8 +123,12 @@ const getTutorDashboardOverview=async(req:Request,res:Response,next:NextFunction
 
 export const tutorController={getAllTutors,
    getTutorById,
-
-   updateTutor,
+    updateTutor,
+   updateTutorSubjects,
+   deleteTutorSubject,
+   featureTutor,
+   getTutorDashboardOverview
+  
 
 }
 
