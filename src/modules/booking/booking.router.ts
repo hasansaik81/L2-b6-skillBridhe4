@@ -9,3 +9,6 @@ router.get("/",auth(UserRoles.STUDENT,UserRoles.TUTOR,UserRoles.ADMIN),bookingCo
 router.get("/:bookingId",auth(UserRoles.STUDENT),bookingController.getBookingById)
 router.post("/create",auth(UserRoles.STUDENT),bookingController.createBooking)
 router.put("/update/:bookingId",auth(UserRoles.STUDENT,UserRoles.TUTOR,UserRoles.ADMIN),bookingController.updateBookingStatus)
+
+
+export const bookingRouter=router;

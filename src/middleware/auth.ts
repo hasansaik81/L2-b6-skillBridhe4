@@ -11,21 +11,6 @@ import { UserRoles } from "../../generated/prisma/enums";
 //     ADMIN = "ADMIN"
 // }
 
-declare global {
-    namespace Express {
-        interface Request{
-            user?:{
-                id:string;
-                email:string;
-                name:string;
-                role:string;
-                emailVerified:boolean;
-
-            }
-        }
-    }
-}
-
 const auth=(...roles:UserRoles[])=>{
     return async(req:Request,  res:Response, next:NextFunction)=>{
         try{

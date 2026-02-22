@@ -9,7 +9,7 @@ type FilterItems={
     categoryId:string|null;
     IsFeatured:boolean|null;
     avgRating:number|null;
-    totalExperience:number|null;
+    totalReviews:number|null;
     subjectId:string|null;
 
     page:number;
@@ -21,8 +21,8 @@ type FilterItems={
 
 
 
-const getAllTutors=async({search, hourlyRate, categoryId,IsFeatured,avgRating,totalReview,subjectId,page,limit,sortBy,sortOrder}:FilterItems)=>{
- const andConditions:any[]=[];
+const getAllTutors=async({search, hourlyRate, categoryId,IsFeatured,avgRating,totalReviews,subjectId,page,limit,sortBy,skip,sortOrder}:FilterItems)=>{
+ const andConditions:TetorProfilesWhereInput[]=[];
  if(search){
     andConditions.push({
         OR:[{
@@ -51,7 +51,7 @@ const getAllTutors=async({search, hourlyRate, categoryId,IsFeatured,avgRating,to
         }
     })
    }
-   if(categoryId){
+   if(hourlyRate){
     andConditions.push({
         hourlyRate:{
             lte:hourlyRate
@@ -76,10 +76,10 @@ const getAllTutors=async({search, hourlyRate, categoryId,IsFeatured,avgRating,to
         }
     })
    }
-   if(totalReview){
+   if(totalReviews){
     andConditions.push({
-        totalReview:{
-            gte:totalReview
+        totalReviews:{
+            gte:totalReviews
         }
     })
    }
@@ -247,65 +247,7 @@ const featureTutor= async (isFeatured:boolean,tutorId:string)=>{
     })
 }
 
-// const getTutorDashboardOverview = async (user:User)=>{
-//     const tutorProfile= await prisma.tutorProfiles.findUnique({
-//         where:{
-//             userId:user.id
-//         },
-//         select:{
-//             id:true,
-//             bio:true,
-//             hourlyRate:true,
-//             avgRating:true,
-//             totalReviews:true,
-//             isFeatured:true,
-//             category:{
-//                 select:{
-//                     id:true,
-//                     name:true
-//                 }
-//             },
 
-//             subjects:{
-//                 select:{
-//                     subject:{
-//                         select:{
-//                             id:true,
-//                             name:true
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//     });
-//     if(!tutorProfile){
-//         throw new Error("Tutor profile not found");
-//     }
-//     return await prisma.$transaction(async(tx)=>{
-//         const [
-//             totalBookings,
-//             completedBookings,
-//             cancelledBookings,
-//             upcomingBookings,
-//             totolEarnings,
-//             recentReviews,
-//             availabilities
-//         ]= await Promise.all([
-//             tx.booking.count({
-//                 where:{
-//                     tutorId:tutorProfile.id
-//                 }
-//             }),
-//             tx.booking.count({
-//                 where:{
-//                     tutorId:tutorProfile.id,
-//                     status:"COMPLETED"
-//                 }
-
-//             })
-//         ])
-//     })
-// }
 
 
 const getTutorDashboardOverview=async(user:User)=>{
@@ -473,11 +415,11 @@ const getTutorDashboardOverview=async(user:User)=>{
             upcomingBookings,
             recentReviews,
             availability:{
-                total:availabilities.length
+                total:availabilities.length,
                 activeSlots:activeAvilabilities.length,
                 slots:availabilities
             }
-        }
+        };
 
     })
 }
@@ -488,7 +430,8 @@ export const tutorService={
     updateTutor,
     updateTutorSubjects,
     deletTutorSubject,
-    featureTutor
+    featureTutor,
+    getTutorDashboardOverview
 }
 
 
