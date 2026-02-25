@@ -1,9 +1,11 @@
+
+
 import { BookingStatus, Review } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
-import { tutorService } from "../tutor/tutor.service";
 
 const createReview=async(data:Review,studentId:string)=>{
     const {bookingId,rating,review}=data;
+
     if(!bookingId){
         throw new Error("Booking Id is required");
     }
@@ -12,6 +14,7 @@ const createReview=async(data:Review,studentId:string)=>{
     }
 
     const numericRating =Number(rating);
+
     if(isNaN(numericRating)){
         throw new Error("Rating must be a number");
     }
@@ -20,6 +23,7 @@ const createReview=async(data:Review,studentId:string)=>{
     }
 
     const roundedRating=Number(numericRating.toFixed(1));
+
     return await prisma.$transaction(async(tx)=>{
         const booking=await tx.booking.findFirstOrThrow({
             where:{id:bookingId},
@@ -66,12 +70,78 @@ const createReview=async(data:Review,studentId:string)=>{
                 rating:roundedRating,
                 review:review.trim(),
                 
-            }
-        })
+            },
+        });
 
-    })
-}
+    });
+};
+
+
+const updateReview=async(reviewId:string,data:Partial<Review>,studentId:string)=>{
+    const {rating,review}=data;
+
+    if(!review||review.trim().length===0){
+        throw new Error ("Review cannot be empty")
+    }
+
+    const numericRating=Number(rating);
+
+    if(isNaN(numericRating)){
+        throw new Error ("Rating must be a number");
+    }
+    if(numericRating > 1 || numericRating>5){
+        throw new Error("Rating must be between 1 and 5");
+    }
+
+    const roundedRating=Number(numericRating.toFixed(1));
+    return await prisma.$transaction(async(tx)=>{
+        const existingReview= await tx.review.findUniqueOrThrow({
+            where:{id:reviewId},
+            select:{
+                id:true,
+                studentId:true,
+                tutorId:true,
+                rating:true
+            },
+        });
+        if(existingReview.studentId !==studentId){
+            throw new Error("You can only edit your own review");
+        }
+
+        const  tutor = await tx.tutorProfiles.findFirstOrThrow({
+            where:{id:existingReview.tutorId},
+            select:{
+                avgRating:true,
+                totalReviews:true
+            },
+        });
+        
+        const totalOld=Number(tutor.avgRating)*tutor.totalReviews;
+        const newAverage=Number(
+            (
+                (totalOld-Number(existingReview.rating)+roundedRating)/
+                tutor.totalReviews
+                
+            ).toFixed(1)
+        );
+        await tx.tutorProfiles.update({
+            where:{id:existingReview.tutorId},
+            data:{
+                avgRating:newAverage
+            },
+        });
+        return await tx.review.update({
+            where:{id:reviewId},
+            data:{
+                rating:roundedRating,
+                review:review.trim(),
+            },
+        });
+    });
+};
+
 
 export const reviewService={
-    createReview
+    createReview,updateReview
 }
+

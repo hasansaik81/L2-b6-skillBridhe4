@@ -48,19 +48,19 @@ const auth=(...roles:UserRoles[])=>{
                 })
             }
 
-            //      if (req.user.role === UserRoles.TUTOR) {
-            //     const tutorProfile = await prisma.tutorProfiles.findUnique({
-            //         where : {
-            //             userId : req.user.id as string
-            //         },
-            //         select : {
-            //             id : true
-            //         }
-            //     });
-            //     if (tutorProfile) {
-            //         req.tutorId = tutorProfile.id
-            //     }
-            // } 
+                 if (req.user.role === UserRoles.TUTOR) {
+                const tutorProfile = await prisma.tutorProfiles.findUnique({
+                    where : {
+                        userId : req.user.id as string
+                    },
+                    select : {
+                        id : true
+                    }
+                });
+                if (tutorProfile) {
+                    req.tutorId = tutorProfile.id
+                }
+            } 
 
             next();
         }catch(err){

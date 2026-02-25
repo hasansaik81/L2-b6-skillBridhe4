@@ -36,7 +36,7 @@ const getAllTutors=async (req:Request,res:Response,next:NextFunction)=>{
 
 const getTutorById=async (req:Request,res:Response,next:NextFunction)=>{
    try{
-    const result=await tutorService.getTutorById(req.params.tutouId as string);
+    const result=await tutorService.getTutorById(req.params.tutourId as string);
     if(result===null){
         return res.status(400).json({success:false,message:"Tutor not found",data:null})
 

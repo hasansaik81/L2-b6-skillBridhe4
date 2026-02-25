@@ -48,10 +48,20 @@ const deleteCategory=async(categoryId:string)=>{
     });
 }
 
+const deleteSubject=async(subjectId:string)=>{
+    return await prisma.subject.delete({
+        where:{
+            id:subjectId
+        }
+    })
+}
+
 export const  categoryService={
     createCategory,
     createSubject,
     getAllCategories,
     updateCategory,
-    updateSubject
+    updateSubject,
+    deleteCategory,
+    deleteSubject
 }

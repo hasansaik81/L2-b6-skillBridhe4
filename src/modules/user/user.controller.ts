@@ -1,8 +1,19 @@
 
 import { NextFunction, Request, Response } from "express";
 import { userService } from "./user.service";
-import paginationSortingHelper from "../../utils/paginationHelper";
 import { User } from "../../../generated/prisma/client";
+import paginationSortingHelper from "../../utils/paginationHelper";
+
+
+
+const getUser=async(req:Request,res:Response,next:NextFunction)=>{
+    try{
+      const result= await userService.getUser(req.user as User)
+      return res.status(200).json({success:true,message:"Users data retrieved successfully",data:result})
+    }catch(e){
+       next(e)
+    }
+}
 
 const listUserts=async(req:Request,res:Response,next:NextFunction)=>{
     try{
@@ -15,24 +26,8 @@ const listUserts=async(req:Request,res:Response,next:NextFunction)=>{
     }
 }
 
-const getUser=async(req:Request,res:Response,next:NextFunction)=>{
-    try{
-      const result= await userService.getUser(req.user as User)
-      return res.status(200).json({success:true,message:"Users data retrieved successfully",data:result})
-    }catch(e){
-       next(e)
-    }
-}
 
 
-const updateUserData =async(req:Request,res:Response,next:NextFunction)=>{
-    try{
-      const result= await userService.updateUserData(req.body,req.user as User)
-      return res.status(200).json({success:true,message:"Users data retrieved successfully",data:result})
-    }catch(e){
-       next(e)
-    }
-}
 
 const updateUserStatus=async(req:Request,res:Response,next:NextFunction)=>{
     try{
@@ -43,6 +38,16 @@ const updateUserStatus=async(req:Request,res:Response,next:NextFunction)=>{
         return res.status(200).json({success:true,message:"Users status ufdated",data:result})
     }catch(e){
         next(e)
+    }
+}
+
+
+const updateUserData =async(req:Request,res:Response,next:NextFunction)=>{
+    try{
+      const result= await userService.updateUserData(req.body,req.user as User)
+      return res.status(200).json({success:true,message:"Users data retrieved successfully",data:result})
+    }catch(e){
+       next(e)
     }
 }
 

@@ -8,10 +8,10 @@ async function seedAdmin(){
     try{
         console.log("*** Admin  seeding Started..")
         const adminData={
-            name:"Admin shaheb1",
-            email:"skillbridge1@admin.com",
+            name:"Admin",
+            email:"admin@skillbridge.com",
             role:UserRoles.ADMIN,
-            password:"admin12345",
+            password:"admin123",
             // emailVerified:true
            
         }
@@ -28,7 +28,8 @@ async function seedAdmin(){
         const signUpAdmin= await fetch("http://localhost:3000/api/auth/sign-up/email",{
             method:"POST",
             headers:{
-                "content-type":"application/json"
+                "content-type":"application/json",
+                  "Origin": process.env.APP_URL || "http://localhost:3000"
             },
             body:JSON.stringify(adminData)
         })
@@ -54,3 +55,57 @@ async function seedAdmin(){
 }
 
 seedAdmin()
+
+
+
+
+
+// import "dotenv/config";
+// import { prisma } from "../lib/prisma";
+// // import prisma from "../app/prisma";
+// import bcrypt from "bcrypt";
+
+// async function seedAdmin() {
+//   try {
+//     if (process.env.ALLOW_ADMIN_SEED !== "true") {
+//       console.log("⛔ Admin seeding disabled");
+//       return;
+//     }
+
+//     console.log("🌱 Checking admin user...");
+
+//     const email = process.env.ADMIN_EMAIL!;
+//     const plainPassword = process.env.ADMIN_PASSWORD!;
+
+//     const existingAdmin = await prisma.user.findUnique({
+//       where: { email },
+//     });
+
+//     if (existingAdmin) {
+//       console.log("✅ Admin already exists");
+//       return;
+//     }
+
+//     const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+//     await prisma.user.create({
+//       data: {
+//         name: "Admin",
+//         email,
+//         password: hashedPassword,
+//         role: "ADMIN",
+//         emailVerified: true,
+//       },
+//     });
+
+//     console.log("✅ Admin created successfully");
+//   } catch (error) {
+//     console.error("❌ Admin seed failed:", error);
+//   } finally {
+//     await prisma.$disconnect();
+//   }
+// }
+
+// seedAdmin();
+
+

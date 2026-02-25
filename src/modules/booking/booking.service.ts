@@ -133,12 +133,15 @@ const createBooking=async(data:Booking,studentId:string)=>{
 
      return {...tutor,availability};
     });
+
     if(tutorInfo.availability.status===AvailabilityStatus.BOOKED){
         throw new Error("This availability is already booked");
 
     }
     const {startTime,endTime}=tutorInfo.availability;
+
        const [startHour,startMinute]:number[]=startTime
+
        .split(":").map(Number) as [number,number];
     
        const [endHour,endMinute]=endTime.split(":").map(Number)as[
@@ -192,7 +195,7 @@ const updateBookingStatus=async (
              throw new Error("Students can only cancel their bookings");
         }
         
-        if(booking.studentId!==user.id){
+        if(booking.studentId !==user.id){
              throw new Error("Not authorized to cancel this bookin");
         }
         

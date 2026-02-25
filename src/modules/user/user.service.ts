@@ -1,4 +1,4 @@
-import { User, UserRoles } from "../../../generated/prisma/client";
+import {  User, UserRoles, UserStatus } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
 type PaginationInput={
@@ -82,7 +82,7 @@ const updateUserData=async (data:Partial<User>,user:User)=>{
     });
 }
 
-const updateUserStatus= async(status:string,userId:string)=>{
+const updateUserStatus= async(status:UserStatus,userId:string)=>{
 return await prisma.user.update({
     where:{
         id:userId

@@ -11,6 +11,45 @@ const createAvailability=async(req:Request,res:Response,next:NextFunction)=>{
   }
 }
 
+const getAllAvailabilities=async (req:Request,res:Response,next:NextFunction)=>{
+  try{
+   const result = await availabilityService.getAllAvailabilities(req.tutorId as string)
+   return res.json({seccuss:true,message:"tutor availability data retrieved seccessfull ",data:result})
+  }catch (e) {
+       next(e)
+  }
+}
+
+const updateAvailability=async (req:Request,res:Response,next:NextFunction)=>{
+  try{
+    const data=req.body;
+    const tutorId=req.tutorId as string;
+    const availabilityId=req.params.availabilityId as string;
+
+    const result = await availabilityService.updateAvailability(data,tutorId,availabilityId)
+    return res.json({success:true,message:"Tutor availability slot update successfully",data:result})
+
+  }catch (e) {
+     next(e)
+  }
+}
+
+const deleteAvailability= async(req:Request,res:Response,next:NextFunction)=>{
+     try{
+      const tutorId=req.tutorId as string;
+      const availabilityId =req.params.availabilityId as string ;
+
+      const result = await availabilityService.deleteAvailability( availabilityId, tutorId)
+      return res.json({success:true,message:"Tutor availability slot deleted successfully",data:result})
+
+     }catch (e) {
+      next(e)
+     }
+}
+
 export const availabilityController={
-    createAvailability
+    createAvailability,
+    updateAvailability,
+    getAllAvailabilities,
+    deleteAvailability
 }
