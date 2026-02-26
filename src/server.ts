@@ -5,7 +5,7 @@ import { prisma } from "./lib/prisma";
 // import { prisma } from "./lib/prisma";
 
 
-const PORT=process.env.PORT ||3000
+const PORT=process.env.PORT 
 console.log("APP_URL:", JSON.stringify(process.env.APP_URL));
 
 async function main(){
