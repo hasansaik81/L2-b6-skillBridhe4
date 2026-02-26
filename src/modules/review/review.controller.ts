@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { reviewService } from "./review.service";
-import e from "cors";
+
 
 const createReview=async(req:Request,res:Response,next:NextFunction)=>{
     try{

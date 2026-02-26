@@ -64,14 +64,7 @@ const deleteCategory=async (req:Request,res:Response,next:NextFunction)=>{
      next(e)
     }
 }
-// const deleteSubject=async (req:Request,res:Response,next:NextFunction)=>{
-//     try{
-//      const result = await categoryService.deleteSubject(req.params.categoryId as string)
-//      return res.status(200).json({success:true,message:"Subject delete  successfully",data:result})
-//     }catch(e) {
-//      next(e)
-//     }
-// }
+
 
 
 const deleteSubject = async (req: Request, res: Response, next: NextFunction) => {

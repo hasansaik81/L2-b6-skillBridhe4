@@ -1,15 +1,12 @@
 
 import { Request, Response,NextFunction } from "express";
 import {auth as betterAuth} from "../lib/auth"
-// import { success } from "better-auth/*";
+
 import { prisma } from "../lib/prisma";
 import { UserRoles } from "../../generated/prisma/enums";
+import { User } from "../../generated/prisma/client";
 
-// export enum UserRoles{
-//    TUTOR  = "USER",
-//    STUDENT="STUDENT",
-//     ADMIN = "ADMIN"
-// }
+
 
 const auth=(...roles:UserRoles[])=>{
     return async(req:Request,  res:Response, next:NextFunction)=>{
@@ -26,22 +23,11 @@ const auth=(...roles:UserRoles[])=>{
                 })
             }
 
-            if(!session.user.emailVerified){
-                return res.status(403).json({
-                    success:false,
-                    message:"Email verification required.please verify your email!"
-                })
-            }
+      
 
-            req.user={
-                id:session.user.id,
-                email:session.user.email,
-                name:session.user.name,
-                role:session.user.role as string,
-                emailVerified:session.user.emailVerified
-            }
+            req.user=session.user as User
 
-            if(roles.length&& !roles.includes(req.user.role as UserRoles)){
+            if(roles.length>0 && !roles.includes(req.user.role as UserRoles)){
                 return res.status(403).json({
                     success:false,
                     message:"Forbidden! You dont have access to this premission"
