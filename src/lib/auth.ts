@@ -1,12 +1,19 @@
-import { betterAuth } from "better-auth";
+import dotenv from "dotenv";
+import { APIError, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-// import { prisma } from "./prisma";
+
 import nodemailer from "nodemailer";
 import { prisma } from "./prisma";
-// import { prisma } from "./prisma";
+
+import { createAuthMiddleware } from "better-auth/api";
+import { UserRoles } from "../../generated/prisma/enums";
+import { url } from "node:inspector";
+import sendVerificationEmail from "../utils/sendVerificationEmail";
+
 
 // If your Prisma file is located elsewhere, you can change the path
 // import { PrismaClient } from "@/generated/prisma/client";
+
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -49,33 +56,58 @@ export const auth = betterAuth({
     requireEmailVerification:true
   }, 
   emailVerification:{
-      sendOnSignUp: true,
-     autoSignInAfterVerification: true,
-    sendVerificationEmail:async({user,url,token},request)=>{
-      try{
-        const verificationUrl=`${process.env.APP_URL}/verify-email?token=${token}`
-        const info = await transporter.sendMail({
-          from: '"prisma blog app" <prisma53@ethereal.email>',
-            to: user.email,
-            subject: "Please verify your email address",
-             html: "<b> Hello World</b>"
-        })
-        console.log("Message sent:",info.messageId)
-
-      }catch(err){
-        console.error(err);
-        throw err
-      }
+    
+    sendVerificationEmail:async({user,url,token})=>{
+      console.log(url)
+      sendVerificationEmail({user:{...user,image:user.image??null},url,token})
+     
+      },
+      autoSignInAfterVerification:true
 
     },
-  },
-  socialProviders: {
-    google: {
+
+    socialProviders: {
+       google: {
       prompt: "select_account consent",
       accessType: "offline",
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
+    
   },
+  
+  hooks:{
+    before:createAuthMiddleware(async(ctx)=>{
+      console.log(url)
+      if(ctx.path==="/sign-up/email"){
+        if(ctx.body.role===UserRoles.ADMIN&&(process.env.ALLOW_ADMIN_SEED =="true")){
+          throw new APIError ("BAD_REQUEST",{
+            message:"you can not sign up as admin"
+          })
+        }
+      }
+    }),
+  },
+  databaseHooks:{
+    user:{
+      create:{
+        after:async(user)=>{
+          try{
+            if(user.role===UserRoles.TUTOR){
+              await prisma.tutorProfiles.create({
+                data:{
+                  userId:user.id
+                }
+              })
+            }
+          }catch(error){
+            console.log(error)
+          };
+          
+        }
+      }
+    }
+  }
+  })
+ 
 
-});
