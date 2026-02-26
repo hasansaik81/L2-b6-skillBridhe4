@@ -11,8 +11,8 @@ model User {
   accounts      Account[]
 
 
-  role           String?   @default("STUDENT")
-  status       String? @default("ACTIVE")
+  role         UserRoles  
+  status       UserStatus @default(ACTIVE)
   tutorProfile TutorProfiles?
   StudentBookings  Booking[]
   studentReviews  Review[]
